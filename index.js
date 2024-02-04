@@ -40,6 +40,9 @@ const pool = mysql.createPool({
       case "add a department":
         await addDepartment();
         break;
+      case "add an employee":
+        await addEmployee();
+        break;
       default:
         console.log('Invalid choice');
         break;
@@ -76,4 +79,35 @@ async function addDepartment() {
   ]);
   await connection.execute('INSERT INTO department (name) VALUES (?)', [department.name]);
   console.log(`Department "${department.name}" added successfully.`);
+}
+
+async function addEmployee() {
+  // Get role titles
+  const connection = await pool.getConnection();
+  const [roles] = await connection.execute('SELECT title FROM role');
+  const roleChoices = roles.map(role => role.title);
+
+  const employee = await inquirer.prompt([
+    {
+      type: 'input',
+      name: 'firstName',
+      message: 'Enter the first name of the employee:'
+    },
+    {
+      type: 'input',
+      name: 'lastName',
+      message: 'Enter the last name of the employee:'
+    },
+    {
+      type: 'list',
+      name: 'role',
+      message: 'Select the role for the employee:',
+      choices: roleChoices
+    }
+  ]);
+
+  const [roleId] = await connection.execute('SELECT id FROM role WHERE title = ?', [employee.role]);
+
+  await connection.execute('INSERT INTO employee (first_name, last_name, role_id) VALUES (?, ?, ?)', [employee.firstName, employee.lastName, roleId]);
+  console.log(`Employee "${employee.firstName} ${employee.lastName}" added successfully.`);
 }
