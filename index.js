@@ -18,8 +18,9 @@ const pool = mysql.createPool({
     // Prompt the user to select a choice using Inquirer
     const answers = await inquirer.prompt([
       {
-        type: 'list',
+        type: 'rawlist',
         name: 'choicelist',
+        message: 'What would you like to do?',
         choices: ["view all departments", "view all roles", "view all employees", "add a department", "add a role", "add an employee", "update employee role"]
       }
     ]);
@@ -36,9 +37,9 @@ const pool = mysql.createPool({
       case "view all employees":
         sqlQuery = 'SELECT * FROM employee';
         break;
-        case "add a department":
-            sqlQuery = 'SELECT * FROM employee';
-            break;
+      case "add a department":
+        await addDepartment();
+        break;
       default:
         console.log('Invalid choice');
         break;
@@ -62,3 +63,17 @@ const pool = mysql.createPool({
     console.error('Error:', error.message);
   }
 })();
+
+
+//Functions for adding and updating
+async function addDepartment() {
+  const department = await inquirer.prompt([
+    {
+      type: 'input',
+      name: 'name',
+      message: 'Enter the name of the department:'
+    }
+  ]);
+  await connection.execute('INSERT INTO department (name) VALUES (?)', [department.name]);
+  console.log(`Department "${department.name}" added successfully.`);
+}
