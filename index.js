@@ -1,3 +1,4 @@
+// Requiring mysql2 and inquierer packages
 const inquirer = require('inquirer');
 const mysql = require('mysql2/promise');
 
@@ -28,6 +29,7 @@ const pool = mysql.createPool({
     // Use the user's selection to construct a SQL query made functions to dry up code
     let sqlQuery;
     switch (answers.choicelist) {
+      // For viewing
       case "view all departments":
         sqlQuery = 'SELECT * FROM department';
         break;
@@ -37,6 +39,7 @@ const pool = mysql.createPool({
       case "view all employees":
         sqlQuery = 'SELECT * FROM employee';
         break;
+      // For adding
       case "add a department":
         await addDepartment();
         break;
@@ -44,6 +47,10 @@ const pool = mysql.createPool({
         await addRole();
         break;
       case "add an employee":
+        await addEmployee();
+        break;
+      // For updating
+      case "update employee role":
         await addEmployee();
         break;
       default:
