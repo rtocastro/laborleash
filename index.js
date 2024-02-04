@@ -84,6 +84,38 @@ async function addDepartment() {
   console.log(`Department "${department.name}" added successfully.`);
 }
 
+async function addRole() {
+  const connection = await pool.getConnection();
+  // Get department name/names
+  const [departments] = await connection.execute('SELECT name FROM department');
+  const departmentChoices = departments.map(department => department.name);
+
+  const role = await inquirer.prompt([
+    {
+      type: 'input',
+      name: 'title',
+      message: 'Enter the title of the role:'
+    },
+    {
+      type: 'input',
+      name: 'salary',
+      message: 'Enter the salary of the role:'
+    },
+    {
+      type: 'list',
+      name: 'department',
+      message: 'Select the department for the role:',
+      choices: departmentChoices
+    }
+  ]);
+
+  // Get department id based on department name
+  const [departmentId] = await connection.execute('SELECT id FROM department WHERE name = ?', [role.department]);
+
+  await connection.execute('INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)', [role.title, role.salary, departmentId]);
+  console.log(`Role "${role.title}" added successfully.`);
+}
+
 async function addEmployee() {
   // Get role titles and inquirer to prompt for add
   const connection = await pool.getConnection();
@@ -115,34 +147,36 @@ async function addEmployee() {
   console.log(`Employee "${employee.firstName} ${employee.lastName}" added successfully.`);
 }
 
-async function addRole() {
-  const connection = await pool.getConnection();
-  // Get department name/names
-  const [departments] = await connection.execute('SELECT name FROM department');
-  const departmentChoices = departments.map(department => department.name);
+async function updateEmployeeRole() {
+  // Get employee names
+  const [employees] = await connection.execute('SELECT CONCAT(first_name, " ", last_name) AS name FROM employee');
+  const employeeChoices = employees.map(employee => employee.name);
 
-  const role = await inquirer.prompt([
+  // Get role titles
+  const [roles] = await connection.execute('SELECT title FROM role');
+  const roleChoices = roles.map(role => role.title);
+
+  const update = await inquirer.prompt([
     {
-      type: 'input',
-      name: 'title',
-      message: 'Enter the title of the role:'
-    },
-    {
-      type: 'input',
-      name: 'salary',
-      message: 'Enter the salary of the role:'
+      type: 'list',
+      name: 'employee',
+      message: 'Select the employee to update:',
+      choices: employeeChoices
     },
     {
       type: 'list',
-      name: 'department',
-      message: 'Select the department for the role:',
-      choices: departmentChoices
+      name: 'role',
+      message: 'Select the new role for the employee:',
+      choices: roleChoices
     }
   ]);
 
-  // Get department id based on department name
-  const [departmentId] = await connection.execute('SELECT id FROM department WHERE name = ?', [role.department]);
+  // Get employee id based on employee name
+  const [employeeId] = await connection.execute('SELECT id FROM employee WHERE CONCAT(first_name, " ", last_name) = ?', [update.employee]);
 
-  await connection.execute('INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)', [role.title, role.salary, departmentId]);
-  console.log(`Role "${role.title}" added successfully.`);
+  // Get role id based on role title
+  const [roleId] = await connection.execute('SELECT id FROM role WHERE title = ?', [update.role]);
+
+  await connection.execute('UPDATE employee SET role_id = ? WHERE id = ?', [roleId, employeeId]);
+  console.log(`Employee role updated successfully.`);
 }
