@@ -25,7 +25,7 @@ const pool = mysql.createPool({
       }
     ]);
 
-    // Use the user's selection to construct a SQL query
+    // Use the user's selection to construct a SQL query made functions to dry up code
     let sqlQuery;
     switch (answers.choicelist) {
       case "view all departments":
@@ -39,6 +39,9 @@ const pool = mysql.createPool({
         break;
       case "add a department":
         await addDepartment();
+        break;
+      case "add a role":
+        await addRole();
         break;
       case "add an employee":
         await addEmployee();
@@ -82,7 +85,7 @@ async function addDepartment() {
 }
 
 async function addEmployee() {
-  // Get role titles
+  // Get role titles and inquirer to prompt for add
   const connection = await pool.getConnection();
   const [roles] = await connection.execute('SELECT title FROM role');
   const roleChoices = roles.map(role => role.title);
@@ -110,4 +113,36 @@ async function addEmployee() {
 
   await connection.execute('INSERT INTO employee (first_name, last_name, role_id) VALUES (?, ?, ?)', [employee.firstName, employee.lastName, roleId]);
   console.log(`Employee "${employee.firstName} ${employee.lastName}" added successfully.`);
+}
+
+async function addRole() {
+  const connection = await pool.getConnection();
+  // Get department name/names
+  const [departments] = await connection.execute('SELECT name FROM department');
+  const departmentChoices = departments.map(department => department.name);
+
+  const role = await inquirer.prompt([
+    {
+      type: 'input',
+      name: 'title',
+      message: 'Enter the title of the role:'
+    },
+    {
+      type: 'input',
+      name: 'salary',
+      message: 'Enter the salary of the role:'
+    },
+    {
+      type: 'list',
+      name: 'department',
+      message: 'Select the department for the role:',
+      choices: departmentChoices
+    }
+  ]);
+
+  // Get department id based on department name
+  const [departmentId] = await connection.execute('SELECT id FROM department WHERE name = ?', [role.department]);
+
+  await connection.execute('INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)', [role.title, role.salary, departmentId]);
+  console.log(`Role "${role.title}" added successfully.`);
 }
