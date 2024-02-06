@@ -24,7 +24,8 @@ Screenshot of application:
 
     Link to repository: https://github.com/rtocastro/laborleash
 
-    Link to walkthrough video:
+    Link to walkthrough video:https://www.youtube.com/watch?v=V8mNzGGLdtQ
+    
 
 ## Credits
 
