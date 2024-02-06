@@ -51,7 +51,7 @@ const pool = mysql.createPool({
         break;
       // For updating
       case "update employee role":
-        await addEmployee();
+        await updateEmployeeRole();
         break;
       default:
         console.log('Invalid choice');
@@ -80,6 +80,7 @@ const pool = mysql.createPool({
 
 //Functions for adding and updating
 async function addDepartment() {
+  const connection = await pool.getConnection();
   const department = await inquirer.prompt([
     {
       type: 'input',
@@ -96,6 +97,7 @@ async function addRole() {
   // Get department name/names
   const [departments] = await connection.execute('SELECT name FROM department');
   const departmentChoices = departments.map(department => department.name);
+
 
   const role = await inquirer.prompt([
     {
@@ -118,10 +120,12 @@ async function addRole() {
 
   // Get department id based on department name
   const [departmentId] = await connection.execute('SELECT id FROM department WHERE name = ?', [role.department]);
+  console.log(departmentId[0].id)
 
-  await connection.execute('INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)', [role.title, role.salary, departmentId]);
+  await connection.execute('INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)', [role.title, role.salary, departmentId[0].id]);
   console.log(`Role "${role.title}" added successfully.`);
 }
+
 
 async function addEmployee() {
   // Get role titles and inquirer to prompt for add
@@ -150,12 +154,14 @@ async function addEmployee() {
 
   const [roleId] = await connection.execute('SELECT id FROM role WHERE title = ?', [employee.role]);
 
-  await connection.execute('INSERT INTO employee (first_name, last_name, role_id) VALUES (?, ?, ?)', [employee.firstName, employee.lastName, roleId]);
+  await connection.execute('INSERT INTO employee (first_name, last_name, role_id) VALUES (?, ?, ?)', [employee.firstName, employee.lastName, roleId[0].id]);
   console.log(`Employee "${employee.firstName} ${employee.lastName}" added successfully.`);
 }
 
 async function updateEmployeeRole() {
   // Get employee names
+  
+  const connection = await pool.getConnection();
   const [employees] = await connection.execute('SELECT CONCAT(first_name, " ", last_name) AS name FROM employee');
   const employeeChoices = employees.map(employee => employee.name);
 
@@ -184,6 +190,6 @@ async function updateEmployeeRole() {
   // Get role id based on role title
   const [roleId] = await connection.execute('SELECT id FROM role WHERE title = ?', [update.role]);
 
-  await connection.execute('UPDATE employee SET role_id = ? WHERE id = ?', [roleId, employeeId]);
+  await connection.execute('UPDATE employee SET role_id = ? WHERE id = ?', [roleId[0].id, employeeId[0].id]);
   console.log(`Employee role updated successfully.`);
 }
